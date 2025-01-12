@@ -10,11 +10,12 @@ from utils import NULLABLE
 class User(AbstractUser):
     username = None
     phone = models.CharField(verbose_name="номер телефона", unique=True, max_length=15)
+    email = models.EmailField(verbose_name="почта", unique=True, **NULLABLE)
     code = models.CharField(verbose_name="код подтверждения", max_length=4, **NULLABLE)
-    code_created_at = models.DateTimeField(verbose_name="время создания кода", blank=True, null=True)
+    code_created_at = models.DateTimeField(verbose_name="время создания кода", **NULLABLE)
     code_is_active = models.BooleanField(verbose_name="активность кода", default=False)
 
-    USERNAME_FIELD = "phone"
+    USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []
 
     def __str__(self):
@@ -41,6 +42,14 @@ class User(AbstractUser):
         if not self.code_created_at:
             return False
         return timezone.now() < self.code_created_at + timedelta(minutes=5)
+
+    def clear_code(self):
+        """
+        Очищает код после успешной проверки.
+        """
+        self.code = None
+        self.code_created_at = None
+        self.save()
 
 # class OTP(models.Model):
 #     phone_number = models.CharField(max_length=15, verbose_name="номер телефона")
