@@ -2,6 +2,7 @@ from rest_framework import serializers
 from users.models import User
 from users.validators import CustomPhoneValidator
 from django.contrib.auth import get_user_model
+from services import send_email
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -27,56 +28,61 @@ User = get_user_model()
 
 
 class SendCodeSerializer(serializers.Serializer):
-    phone = serializers.CharField()
+    email = serializers.EmailField()
 
-    def validate_phone(self, phone):
+    def validate_email(self, email):
         """
-        Проверяет валидность номера телефона.
+        Проверяет валидность email.
         """
-        if not phone.isdigit() or len(phone) < 10:  # Пример валидации
-            raise serializers.ValidationError("Введите корректный номер телефона.")
-        return phone
+        if not email:
+            raise serializers.ValidationError("Введите корректный email.")
+        return email
 
     def create(self, validated_data):
         """
-        Генерирует код для пользователя.
+        Генерирует код для пользователя и отправляет его на email.
         """
-        phone = validated_data['phone']
-        user, created = User.objects.get_or_create(phone=phone)
-        raw_code = user.generate_code()  # Генерация кода
-        # Здесь можно добавить отправку SMS
-        print(f"Код отправлен на номер {phone}: {raw_code}")
-        return user
+        email = validated_data['email']
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            raise serializers.ValidationError("Пользователь с таким email не найден.")
+
+        # Генерируем код и отправляем
+        raw_code = user.generate_code()
+        send_email(email, raw_code)
+        return {"detail": f"Код отправлен на почту {email}."}
 
 
 class VerifyCodeSerializer(serializers.Serializer):
-    phone = serializers.CharField()
+    email = serializers.EmailField()
     code = serializers.CharField()
 
     def validate(self, data):
         """
-        Проверяет телефон и код.
+        Проверяет email и код.
         """
-        phone = data.get('phone')
+        email = data.get('email')
         code = data.get('code')
 
         try:
-            user = User.objects.get(phone=phone)
+            user = User.objects.get(email=email)
         except User.DoesNotExist:
-            raise serializers.ValidationError("Пользователь с таким номером телефона не найден.")
+            raise serializers.ValidationError("Пользователь с таким email не найден.")
 
         if not user.is_code_valid():
             raise serializers.ValidationError("Код истёк или недействителен.")
         if user.code != code:
             raise serializers.ValidationError("Код неверный.")
 
-        return user
+        data['user'] = user
+        return data
 
     def create(self, validated_data):
         """
         Завершает процесс авторизации.
         """
-        user = validated_data
+        user = validated_data['user']
         user.clear_code()  # Убираем код после успешной авторизации
         return user
 

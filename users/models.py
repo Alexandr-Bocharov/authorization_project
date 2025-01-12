@@ -27,13 +27,14 @@ class User(AbstractUser):
 
     def generate_code(self):
         """
-        Генерирует 4-значный код, хэширует его и сохраняет как пароль.
+        Генерирует 4-значный код, сохраняет его как пароль и в поле `code`.
         """
         raw_code = str(random.randint(1000, 9999))
-        self.set_password(raw_code)  # Хэширует код и сохраняет его как пароль
-        self.code_created_at = timezone.now()  # Устанавливает время создания кода
+        self.code = raw_code  # Сохраняем код в поле `code`
+        self.set_password(raw_code)  # Хэшируем код как пароль
+        self.code_created_at = timezone.now()  # Устанавливаем время создания кода
         self.save()
-        return raw_code  # Возвращает сгенерированный код (в незашифрованном виде)
+        return raw_code  # Возвращаем незашифрованный код
 
     def is_code_valid(self):
         """

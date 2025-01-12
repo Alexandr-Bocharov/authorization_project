@@ -23,8 +23,8 @@ class VerifyCodeAPIView(APIView):
     def post(self, request, *args, **kwargs):
         serializer = VerifyCodeSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        user = serializer.validated_data
-        # Генерируем токен для пользователя
+        user = serializer.save()  # Вызываем save() для завершения авторизации
+        # Генерируем токены для пользователя
         refresh = RefreshToken.for_user(user)
         return Response({
             'refresh': str(refresh),
