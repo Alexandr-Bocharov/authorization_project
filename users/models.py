@@ -9,7 +9,7 @@ from utils import NULLABLE
 
 class User(AbstractUser):
     username = None
-    phone = models.CharField(verbose_name="номер телефона", unique=True, max_length=15)
+    phone = models.CharField(verbose_name="номер телефона", max_length=15)
     email = models.EmailField(verbose_name="почта", unique=True, **NULLABLE)
     code = models.CharField(verbose_name="код подтверждения", max_length=4, **NULLABLE)
     code_created_at = models.DateTimeField(verbose_name="время создания кода", **NULLABLE)
@@ -33,23 +33,32 @@ class User(AbstractUser):
         self.code = raw_code  # Сохраняем код в поле `code`
         self.set_password(raw_code)  # Хэшируем код как пароль
         self.code_created_at = timezone.now()  # Устанавливаем время создания кода
+        self.code_is_active = True
         self.save()
         return raw_code  # Возвращаем незашифрованный код
 
     def is_code_valid(self):
         """
-        Проверяет, действителен ли код (пароль).
+        Проверяет, действителен ли код.
         """
         if not self.code_created_at:
             return False
-        return timezone.now() < self.code_created_at + timedelta(minutes=5)
+
+        # Проверяем, истёк ли срок действия кода
+        if timezone.now() > self.code_created_at + timedelta(minutes=5):
+            self.code_is_active = False  # Деактивируем код
+            self.save()
+            return False
+
+        return self.code_is_active
 
     def clear_code(self):
         """
-        Очищает код после успешной проверки.
+        Очищает код после успешного применения.
         """
         self.code = None
         self.code_created_at = None
+        self.code_is_active = False  # Деактивируем код
         self.save()
 
 # class OTP(models.Model):

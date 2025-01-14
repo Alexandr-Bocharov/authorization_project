@@ -1,8 +1,10 @@
-from rest_framework import serializers
+from rest_framework import serializers, status
+from rest_framework.response import Response
+
 from users.models import User
 from users.validators import CustomPhoneValidator
 from django.contrib.auth import get_user_model
-from services import send_email
+from users.services import send_email
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -24,11 +26,11 @@ class UserSerializer(serializers.ModelSerializer):
         return user
 
 
-User = get_user_model()
+# User = get_user_model()
 
 
 class SendCodeSerializer(serializers.Serializer):
-    email = serializers.EmailField()
+    email = serializers.EmailField(required=True)
 
     def validate_email(self, email):
         """
@@ -42,16 +44,19 @@ class SendCodeSerializer(serializers.Serializer):
         """
         Генерирует код для пользователя и отправляет его на email.
         """
+        print("REQUEST DATA:", validated_data)
         email = validated_data['email']
         try:
             user = User.objects.get(email=email)
         except User.DoesNotExist:
-            raise serializers.ValidationError("Пользователь с таким email не найден.")
+            user = User.objects.create(email=email)
 
         # Генерируем код и отправляем
         raw_code = user.generate_code()
         send_email(email, raw_code)
-        return {"detail": f"Код отправлен на почту {email}."}
+        print("принт после send_email")
+        print(email)
+        return user
 
 
 class VerifyCodeSerializer(serializers.Serializer):
