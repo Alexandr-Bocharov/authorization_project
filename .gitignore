@@ -1,6 +1,6 @@
-#celerybeat-schedule.db
-#django.db
-#dump.rdb
+celerybeat-schedule.db
+django.db
+dump.rdb
 
 # IntelliJ project files
 .idea
