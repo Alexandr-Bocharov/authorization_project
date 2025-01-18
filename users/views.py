@@ -1,13 +1,10 @@
 from django.contrib.auth import login
 from django.middleware.csrf import rotate_token
-from django.shortcuts import render
 from django.urls import reverse
-from django.views import View
-from rest_framework import generics, serializers
+from rest_framework import serializers
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 
-from users.models import User
 from users.serializers import UserSerializer, UserProfileSerializer, ActivateInviteCodeSerializer
 
 from rest_framework.response import Response
@@ -28,11 +25,10 @@ from django.http import HttpResponse
 from .models import User
 from users.forms import SendCodeForm, ActivateInviteCodeForm
 
-from .services import send_email
+from users.services import  send_sms
 
 from django.contrib import messages
 from .forms import VerifyCodeForm
-
 
 
 class SendCodeAPIView(generics.CreateAPIView):
@@ -118,12 +114,12 @@ class SendCodeView(FormView):
 
     def form_valid(self, form):
         user = form.save()
-        email = user.email
+        phone = user.phone
         code = user.generate_code()
         user.code = code
-        send_email(email, code)
+        send_sms(phone, code)
         user.save()
-        return redirect(f"{reverse('users:verify-code-temp')}?email={user.email}")
+        return redirect(f"{reverse('users:verify-code-temp')}?phone={phone}")
 
     def form_invalid(self, form):
         return HttpResponse("Некорректные данные", status=400)
@@ -135,8 +131,8 @@ class Home(ListView):
 
 
 class VerifyCodeView(FormView):
-    template_name = 'users/verify_code.html'  # Шаблон для отображения формы
-    form_class = VerifyCodeForm  # Форма, связанная с этим представлением
+    template_name = 'users/verify_code.html'
+    form_class = VerifyCodeForm
 
     def get_initial(self):
 
@@ -148,12 +144,11 @@ class VerifyCodeView(FormView):
     def form_valid(self, form):
         # Получаем данные из формы
         code = form.cleaned_data['code']
-        email = form.cleaned_data['email']
+        phone = form.cleaned_data['phone']
 
         try:
             # Проверяем пользователя и код
-            user = User.objects.get(email=email, code=code)
-            print(user.code_is_active)
+            user = User.objects.get(phone=phone, code=code)
             if not user.code_is_active:
                 messages.error(self.request, "Код истёк. Запросите новый код.")
                 return self.form_invalid(form)

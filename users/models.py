@@ -10,7 +10,7 @@ from utils import NULLABLE
 
 class User(AbstractUser):
     username = None
-    phone = models.CharField(verbose_name="номер телефона", max_length=15)
+    phone = models.CharField(verbose_name="номер телефона", max_length=15, unique=True)
     email = models.EmailField(verbose_name="почта", unique=True, **NULLABLE)
     code = models.CharField(verbose_name="код подтверждения", max_length=4, **NULLABLE)
     code_created_at = models.DateTimeField(verbose_name="время создания кода", **NULLABLE)
@@ -18,11 +18,12 @@ class User(AbstractUser):
     invite_code = models.CharField(verbose_name="инвайт-код", max_length=6, **NULLABLE, unique=True)
     activated_invite_code = models.CharField(verbose_name="активированный инвайт-код", **NULLABLE, max_length=6)
 
-    USERNAME_FIELD = "email"
+    EMAIL_FIELD = "phone"
+    USERNAME_FIELD = "phone"
     REQUIRED_FIELDS = []
 
     def __str__(self):
-        return self.email
+        return self.phone
 
     class Meta:
         verbose_name = "пользователь"

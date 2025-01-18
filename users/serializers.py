@@ -1,10 +1,7 @@
-from rest_framework import serializers, status
-from rest_framework.response import Response
-from users.permissions import IsOwner
+from rest_framework import serializers
 from users.models import User
 from users.validators import CustomPhoneValidator
-from django.contrib.auth import get_user_model
-from users.services import send_email
+from users.services import send_sms
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -22,7 +19,6 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        # fields = ['id', 'email', 'invite_code', 'activated_invite_code', 'phone_numbers_activated_by_invite']
         fields = "__all__"
 
     def get_phone_numbers_activated_by_invite(self, obj):
@@ -76,31 +72,31 @@ class SendCodeSerializer(serializers.Serializer):
         Генерирует код для пользователя и отправляет его на email.
         """
         print("REQUEST DATA:", validated_data)
-        email = validated_data['email']
+        phone = validated_data['phone']
         try:
-            user = User.objects.get(email=email)
+            user = User.objects.get(phone=phone)
         except User.DoesNotExist:
-            user = User.objects.create(email=email)
+            user = User.objects.create(phone=phone)
 
         # Генерируем код и отправляем
         raw_code = user.generate_code()
-        send_email(email, raw_code)
+        send_sms(phone, raw_code)
         return user
 
 
 class VerifyCodeSerializer(serializers.Serializer):
-    email = serializers.EmailField()
+    phone = serializers.CharField()
     code = serializers.CharField()
 
     def validate(self, data):
         """
         Проверяет email и код.
         """
-        email = data.get('email')
+        phone = data.get('phone')
         code = data.get('code')
 
         try:
-            user = User.objects.get(email=email)
+            user = User.objects.get(phone=phone)
         except User.DoesNotExist:
             raise serializers.ValidationError("Пользователь с таким email не найден.")
 
