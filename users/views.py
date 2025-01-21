@@ -25,7 +25,7 @@ from django.http import HttpResponse
 from .models import User
 from users.forms import SendCodeForm, ActivateInviteCodeForm
 
-from users.services import  send_sms
+from users.services import send_sms, send_sms_imitation
 
 from django.contrib import messages
 from .forms import VerifyCodeForm
@@ -118,11 +118,12 @@ class SendCodeView(FormView):
         code = user.generate_code()
         user.code = code
         send_sms(phone, code)
+        # send_sms_imitation(phone, code)
         user.save()
         return redirect(f"{reverse('users:verify-code-temp')}?phone={phone}")
 
-    def form_invalid(self, form):
-        return HttpResponse("Некорректные данные", status=400)
+    # def form_invalid(self, form):
+    #     return HttpResponse("Некорректные данные", status=400)
 
 
 class Home(ListView):
@@ -138,7 +139,7 @@ class VerifyCodeView(FormView):
 
     # Заполняем поле email из GET-параметров
         initial = super().get_initial()
-        initial['email'] = self.request.GET.get('email', '')
+        initial['phone'] = self.request.GET.get('phone', '')
         return initial
 
     def form_valid(self, form):
@@ -175,7 +176,7 @@ class VerifyCodeView(FormView):
 
     def form_invalid(self, form):
         # Обработка неуспешной проверки формы
-        return super().form_invalid(form)
+        return HttpResponse("Некорректные данные", status=400)
 
 
 class UserDetailView(DetailView):

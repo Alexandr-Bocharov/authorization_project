@@ -6,7 +6,7 @@
 <h2>Введите код подтверждения</h2>
 <form method="post">
     {% csrf_token %}
-    {{ form.email }}
+    {{ form.phone }}
     {{ form.code }}
     <button type="submit">Подтвердить</button>
 </form>

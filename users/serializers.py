@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from users.models import User
 from users.validators import CustomPhoneValidator
-from users.services import send_sms
+from users.services import send_sms, send_sms_imitation
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -57,21 +57,17 @@ class ActivateInviteCodeSerializer(serializers.Serializer):
 
 
 class SendCodeSerializer(serializers.Serializer):
-    email = serializers.EmailField(required=True)
+    phone = serializers.CharField(required=True)
 
-    def validate_email(self, email):
-        """
-        Проверяет валидность email.
-        """
-        if not email:
-            raise serializers.ValidationError("Введите корректный email.")
-        return email
+    class Meta:
+        validators = [
+            CustomPhoneValidator(),
+        ]
 
     def create(self, validated_data):
         """
         Генерирует код для пользователя и отправляет его на email.
         """
-        print("REQUEST DATA:", validated_data)
         phone = validated_data['phone']
         try:
             user = User.objects.get(phone=phone)
@@ -80,7 +76,8 @@ class SendCodeSerializer(serializers.Serializer):
 
         # Генерируем код и отправляем
         raw_code = user.generate_code()
-        send_sms(phone, raw_code)
+        # send_sms(phone, raw_code)
+        send_sms_imitation(phone, raw_code)
         return user
 
 

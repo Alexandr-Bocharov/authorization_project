@@ -5,6 +5,7 @@ from django.utils import timezone
 from datetime import timedelta
 from users.services2 import six_digits_code_generation
 
+
 from utils import NULLABLE
 
 
@@ -18,7 +19,6 @@ class User(AbstractUser):
     invite_code = models.CharField(verbose_name="инвайт-код", max_length=6, **NULLABLE, unique=True)
     activated_invite_code = models.CharField(verbose_name="активированный инвайт-код", **NULLABLE, max_length=6)
 
-    EMAIL_FIELD = "phone"
     USERNAME_FIELD = "phone"
     REQUIRED_FIELDS = []
 
@@ -26,13 +26,12 @@ class User(AbstractUser):
         return self.phone
 
     class Meta:
-        verbose_name = "пользователь"
-        verbose_name_plural = "пользователи"
+        verbose_name = "Пользователь"
+        verbose_name_plural = "Пользователи"
 
     def generate_code(self):
         """
-        Генерирует 4-значный код, сохраняет его в поле `code',
-        + генерирует 6-значный код, сохраняет его в поле 'invite_code'.
+        Генерирует 4-значный код, сохраняет его в поле `code'
         """
         raw_code = str(random.randint(1000, 9999))
         self.code = raw_code  # Сохраняем код в поле `code`

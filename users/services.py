@@ -17,26 +17,28 @@ def generate_code():
     return str(random.randint(1000, 9999))
 
 
-def send_email(email, code):
-    send_mail(
-        "Ваш код для авторизации",
-        code,
-        "counter230620013@yandex.com",
-        [email]
-    )
-    user = User.objects.get(email=email)
-    cancel_code_activity.apply_async((user.id,), countdown=5 * 60)
-    print('отправлено сообщение на почту!!!!!!')
-
-
 def send_sms(phone, code):
+    """ Реальная рассылка через сервис SMS aero """
     username = os.getenv("SMS_AERO_USER")
     password = os.getenv("SMS_AERO_KEY")
 
-    response = requests.get(f"https://email:api_key@gate.smsaero.ru/v2/sms/send?number={phone}&text=your+code:+{code}&sign=SMS Aero",
-                            auth=HTTPBasicAuth(username, password))
+    response = requests.get(
+        f"https://email:api_key@gate.smsaero.ru/v2/sms/send?number={phone}&text=your+code:+{code}&sign=SMS Aero",
+        auth=HTTPBasicAuth(username, password)
+    )
 
     user = User.objects.get(phone=phone)
-    cancel_code_activity.apply_async((user.id,), countdown=5 * 60)
+    cancel_code_activity.apply_async((user.id,), countdown=10 * 60)  # код перестанет быть активным через 10 минут,
+                                                                    # если его не ввести
+
+
+def send_sms_imitation(phone, code):
+    """ Имитация смс-рассылки """
+
+    user = User.objects.get(phone=phone)
+    cancel_code_activity.apply_async((user.id,), countdown=10 * 60)  # код перестанет быть активным через 10 минут,
+                                                                    # если его не ввести
+    print(f"смс отправлено на номер {phone} с кодом {code}")
+
 
 
