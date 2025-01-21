@@ -18,11 +18,11 @@
 
 1. Клонирование репозитория  
 
-```git clone https://github.com/OkulusDev/Oxygen.git```  
+```git clone git@github.com:Alexandr-Bocharov/authorization_project.git```  
 
 2. Переход в директорию Oxygen  
 
-```cd Oxygen```  
+```cd authorization_project```  
 
 3. Создание виртуального окружения  
 
