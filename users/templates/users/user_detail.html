@@ -1,0 +1,20 @@
+{% extends "users/base.html" %}
+
+{% block title %}Профиль{% endblock %}
+
+{% block content %}
+<h2>Ваш профиль</h2>
+<p><strong>Номер телефона:</strong> {{ user_profile.phone }}</p>
+<p><strong>Инвайт-код:</strong> {{ user_profile.invite_code }}</p>
+<p><strong>Активированный инвайт-код:</strong> {{ user_profile.activated_invite_code|default:"Не активирован" }}</p>
+
+<h3>Пользователи, активировавшие ваш инвайт-код:</h3>
+<ul>
+    {% for phone in user_profile.phone_numbers_activated_by_invite %}
+        <li>{{ phone }}</li>
+    {% empty %}
+        <li>Пока никто не активировал ваш инвайт-код.</li>
+    {% endfor %}
+</ul>
+{% endblock %}
+
